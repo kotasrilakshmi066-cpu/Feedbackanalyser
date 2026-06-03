@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FeedbackAnalyser</title>
+<style>
+  body { background: #0d0f14; color: #e8eaf0; font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; }
+  h1 { color: #6ee7b7; }
+  button { background: #6ee7b7; color: #0d0f14; padding: 0.8rem 2rem; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; margin-top: 1rem; display: block; width: 100%; }
+  .card { background: #161920; border: 1px solid #252830; border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem; }
+  .pill { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 999px; margin: 0.3rem; font-size: 0.85rem; }
+  .red { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+  .green { background: rgba(110,231,183,0.12); color: #6ee7b7; border: 1px solid rgba(110,231,183,0.3); }
+  #results { display: none; }
+</style>
+</head>
+<body>
+<h1>🤖 FeedbackAnalyser</h1>
+<p style="color:#6b7280">HR Employee Feedback Intelligence</p>
+<div class="card">
+  <p>Upload a CSV with <code>employee_feedback</code> column, or click Analyse to use default data.</p>
+  <input type="file" id="csvFile" accept=".csv" style="color:#e8eaf0"/>
+  <button onclick="analyse()">🔍 Analyse Feedback</button>
+</div>
+<div id="results">
+  <div class="card">
+    <h2>📊 Total Responses: <span id="total" style="color:#6ee7b7"></span></h2>
+  </div>
+  <div class="card">
+    <h3>🔴 Top Concerns</h3>
+    <div id="concerns"></div>
+  </div>
+  <div class="card">
+    <h3>🟢 Top Positives</h3>
+    <div id="positives"></div>
+  </div>
+  <div class="card">
+    <h3>💯 Sentiment Scores</h3>
+    <div id="scores"></div>
+  </div>
+</div>
+<script>
+async function analyse() {
+  const formData = new FormData();
+  const file = document.getElementById('csvFile').files[0];
+  if (file) formData.append('file', file);
+  const res = await fetch('/analyze', { method: 'POST', body: formData });
+  const data = await res.json();
+  if (data.error) { alert(data.error); return; }
+  document.getElementById('total').textContent = data.total;
+  document.getElementById('concerns').innerHTML = data.top_concerns.map(c => `<span class="pill red">${c}</span>`).join('');
+  document.getElementById('positives').innerHTML = data.top_positives.map(p => `<span class="pill green">${p}</span>`).join('');
+  document.getElementById('scores').innerHTML = Object.entries(data.sentiment_scores).map(([t,s]) => `<p>${t}: <strong style="color:${s>=0?'#6ee7b7':'#f87171'}">${s}%</strong></p>`).join('');
+  document.getElementById('results').style.display = 'block';
+}
+</script>
+</body>
+</html>
